@@ -1,0 +1,14 @@
+[
+ "2024-06-19-wfhub-dump.ttl",
+ "bioconda-dump.ttl",
+ "biocontainers-dump.ttl",
+ "bioschemas-biii-dump.ttl",
+ "bioschemas-dump.ttl",
+ "bise-ontology-biii-dump.ttl",
+ "debian-dump.ttl",
+ "galaxy-dump.ttl",
+ "galaxyworkflow-dump.ttl",
+ "workflowhub-dump.ttl",
+ "workflow_hub.ttl",
+ "EDAM.owl"
+]

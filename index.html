@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>SPARQL – Oxigraph</title>
+<style>
+  body { font: 14px/1.4 system-ui, sans-serif; max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; color: #222; }
+  h1 { font-size: 1.2rem; margin: 0 0 .5rem; }
+  #status { color: #666; font-size: 12px; white-space: pre-line; margin-bottom: .5rem; }
+  textarea { width: 100%; height: 12rem; font: 13px/1.4 ui-monospace, monospace; box-sizing: border-box; padding: .5rem; }
+  button { padding: .3rem 1rem; margin: .3rem 0; }
+  #info { color: #666; margin-left: .5rem; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { border: 1px solid #ddd; padding: .25rem .4rem; text-align: left; vertical-align: top; word-break: break-all; }
+  th { background: #f4f4f4; position: sticky; top: 0; }
+  pre { background: #f6f6f6; padding: .5rem; overflow: auto; }
+  .err { color: #b00; }
+  a { color: #06c; }
+</style>
+</head>
+<body>
+<h1>SPARQL over local datasets</h1>
+<div id="status">Loading…</div>
+<textarea id="query" spellcheck="false">SELECT ?g (COUNT(*) AS ?triples)
+WHERE { GRAPH ?g { ?s ?p ?o } }
+GROUP BY ?g
+ORDER BY DESC(?triples)</textarea>
+<div><button id="run" disabled>Run (Ctrl+Enter)</button><span id="info"></span></div>
+<div id="results"></div>
+<script type="module" src="app.js"></script>
+</body>
+</html>
