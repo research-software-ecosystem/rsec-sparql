@@ -12,15 +12,37 @@ Static website to query local Turtle datasets with SPARQL in the browser, using 
 ./update-data.sh            # copies ~/content/datasets/*.ttl and rebuilds data/index.json
 ```
 
-## Run
+## Run locally
 
-Any static file server works (WASM needs to be served over HTTP, not `file://`):
+### Requirements
 
-```bash
-python3 -m http.server 8000
-```
+- A recent browser (Chrome, Firefox, Safari or Edge) with WebAssembly support.
+- Any static HTTP server, e.g. Python 3 (used below). No build step and no Node.js are needed to run the site.
 
-Then open http://localhost:8000.
+The datasets (`data/`) and Oxigraph (`vendor/`) are committed in the repository, so nothing needs to be downloaded at runtime.
+
+### Steps
+
+1. Get the code:
+
+   ```bash
+   git clone <repository-url> rsec-sparql
+   cd rsec-sparql
+   ```
+
+2. Serve the repository root over HTTP. Opening `index.html` directly (`file://`) does not work, because browsers block loading the `.wasm` file and the datasets from disk:
+
+   ```bash
+   python3 -m http.server 8000
+   ```
+
+   Other options: `npx serve -l 8000`, or `php -S localhost:8000`.
+
+3. Open http://localhost:8000. The status area lists each dataset as it loads (about 75 MB, roughly 1.2 million triples). The **Run** button is enabled once everything is loaded; this takes from a few seconds up to about 30 s depending on the machine, and the tab needs several hundred MB of memory.
+
+4. Type a SPARQL query and press **Run** or Ctrl+Enter. Each file is in its own named graph `<urn:dataset:FILENAME>`, and the default graph is the union of all of them, so queries can either ignore graphs or use `GRAPH ?g { … }`.
+
+To stop the server, press Ctrl+C in its terminal.
 
 ## Demo animation
 
