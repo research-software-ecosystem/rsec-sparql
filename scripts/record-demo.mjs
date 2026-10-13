@@ -1,0 +1,108 @@
+// Record demo.gif: open the site in headless Chrome, wait for the datasets to load,
+// type a query, run it, then assemble the screenshots into a GIF with ImageMagick.
+//
+// Usage: npm run demo [-- output.gif]
+// Env:   CHROME=/path/to/chrome (default: /usr/bin/google-chrome), PORT=8765
+import puppeteer from "puppeteer-core";
+import { spawn, execFileSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const OUTPUT = path.resolve(process.argv[2] ?? path.join(ROOT, "demo.gif"));
+const CHROME = process.env.CHROME ?? "/usr/bin/google-chrome";
+const PORT = Number(process.env.PORT ?? 8765);
+const URL = `http://localhost:${PORT}/`;
+const WIDTH = 1000, HEIGHT = 640, GIF_WIDTH = 800;
+
+const QUERY = `PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX schema: <http://schema.org/>
+PREFIX bioconda: <https://github.com/bioconda/bioconda-recipes/tree/master/recipes/>
+PREFIX edam: <http://edamontology.org/>
+
+SELECT ?bioconda ?op_label WHERE {
+  VALUES ?bioconda { bioconda:admixture bioconda:abricate }
+  ?bioconda schema:identifier ?id .
+  ?id schema:featureList ?op .
+  ?op rdfs:subClassOf* ?parent .
+  ?parent rdfs:subClassOf+ edam:operation_0004 ;
+          rdfs:label ?op_label .
+}`;
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const work = fs.mkdtempSync(path.join(os.tmpdir(), "demo-gif-"));
+
+async function waitForServer() {
+  for (let i = 0; i < 50; i++) {
+    try { if ((await fetch(URL)).ok) return; } catch {}
+    await sleep(200);
+  }
+  throw new Error(`server did not start on ${URL}`);
+}
+
+async function record() {
+  const frames = []; // [png path, address-bar text, delay in 1/100 s]
+  const browser = await puppeteer.launch({
+    executablePath: CHROME, headless: true,
+    userDataDir: path.join(work, "profile"), args: ["--no-first-run"],
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setViewport({ width: WIDTH, height: HEIGHT });
+    let url = "about:blank";
+    const snap = async (delay) => {
+      const f = path.join(work, `${String(frames.length).padStart(3, "0")}.png`);
+      await page.screenshot({ path: f });
+      frames.push([f, url, delay]);
+    };
+
+    await page.goto(url); await snap(80);
+    url = URL;
+    await page.goto(url, { waitUntil: "domcontentloaded" }); await snap(60);
+    while (await page.$eval("#run", (b) => b.disabled)) { await sleep(1500); await snap(25); }
+    await snap(150);
+
+    await page.$eval("#query", (t) => { t.value = ""; t.focus(); });
+    await snap(40);
+    for (const line of QUERY.split("\n")) {
+      await page.$eval("#query", (t, l) => { t.value += (t.value ? "\n" : "") + l; t.scrollTop = t.scrollHeight; }, line);
+      if (line.trim()) await snap(18);
+    }
+    await page.$eval("#query", (t) => (t.scrollTop = 0));
+    await snap(80);
+
+    await page.hover("#run"); await page.click("#run");
+    await page.waitForFunction(() => document.getElementById("info").textContent !== "");
+    await page.evaluate(() => document.getElementById("results").scrollIntoView({ block: "end" }));
+    await snap(500);
+  } finally {
+    await browser.close();
+  }
+  return frames;
+}
+
+function assemble(frames) {
+  const args = [];
+  frames.forEach(([png, url, delay], i) => {
+    const out = path.join(work, `bar-${i}.png`);
+    execFileSync("magick", [png, "-background", "#e8e8e8", "-gravity", "north", "-splice", "0x40",
+      "-fill", "white", "-stroke", "#c8c8c8", "-draw", `roundrectangle 12,7 ${WIDTH - 12},33 13,13`,
+      "-stroke", "none", "-fill", "#333", "-font", "DejaVu-Sans", "-pointsize", "15",
+      "-gravity", "northwest", "-annotate", "+28+12", url, "-resize", `${GIF_WIDTH}x`, out]);
+    args.push("-delay", String(delay), out);
+  });
+  execFileSync("magick", [...args, "-loop", "0", "-colors", "96", "-layers", "Optimize", OUTPUT]);
+}
+
+const server = spawn("python3", ["-m", "http.server", String(PORT), "--bind", "127.0.0.1"], { cwd: ROOT, stdio: "ignore" });
+try {
+  await waitForServer();
+  const frames = await record();
+  assemble(frames);
+  console.log(`${OUTPUT}: ${frames.length} frames, ${(fs.statSync(OUTPUT).size / 1e3).toFixed(0)} kB`);
+} finally {
+  server.kill();
+  fs.rmSync(work, { recursive: true, force: true });
+}
