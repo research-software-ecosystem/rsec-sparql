@@ -26,7 +26,7 @@ The datasets (`data/`) and Oxigraph (`vendor/`) are committed in the repository,
 1. Get the code:
 
    ```bash
-   git clone <repository-url> rsec-sparql
+   git clone https://github.com/research-software-ecosystem/rsec-sparql.git
    cd rsec-sparql
    ```
 
