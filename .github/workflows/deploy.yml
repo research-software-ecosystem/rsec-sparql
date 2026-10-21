@@ -47,6 +47,9 @@ jobs:
     - name: Check example queries
       run: npm run check-queries -- _site/data _site/queries
 
+    - name: Compress datasets
+      run: python3 scripts/compress-data.py _site/data
+
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v4
       with:

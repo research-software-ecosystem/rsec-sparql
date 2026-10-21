@@ -29,7 +29,19 @@ The site is published to GitHub Pages by [.github/workflows/deploy.yml](.github/
 1. runs `scripts/fetch-data.sh`, which clones only the `datasets/` folder of [research-software-ecosystem/content](https://github.com/research-software-ecosystem/content), applies a temporary fix to `bioconda-dump.ttl` identifiers ([content#4783](https://github.com/research-software-ecosystem/content/issues/4783)) and downloads the latest `EDAM.owl` from https://edamontology.org/EDAM.owl,
 2. assembles `index.html`, `app.js`, `config.js`, `highlight.js`, `vendor/`, `queries/` and the data into `_site/`,
 3. runs every example query against that data and stops if one fails or returns nothing (see [Example queries](#example-queries)),
-4. pushes `_site/` to the `gh-pages` branch, which GitHub Pages serves at https://research-software-ecosystem.github.io/sparql/.
+4. runs `python3 scripts/compress-data.py _site/data` to create gzip copies of the indexed datasets and add their filenames and compressed sizes to the published manifest,
+5. pushes `_site/` to the `gh-pages` branch, which GitHub Pages serves at https://research-software-ecosystem.github.io/sparql/.
+
+GitHub Pages does not currently apply HTTP compression to the site's Turtle files. The browser
+therefore fetches the manifest's optional `gzip` filename and decompresses it with the built-in
+`DecompressionStream` API before parsing. Original files remain available for browsers without
+that API. The original filenames, graph names, base IRIs and uncompressed sizes stay unchanged;
+the loading bar counts compressed bytes before decompression against `gzipSize` (or original
+bytes against `size` for plain-file downloads). Each file's progress allocation remains half
+download and half parsing; this is a loading indicator, not an estimate of remaining time.
+DevTools shows smaller `.gz` downloads, rather than
+HTTP compression of the original `.ttl` requests. Local runs use plain files unless you explicitly
+run `python3 scripts/compress-data.py data`.
 
 ## Run locally
 

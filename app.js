@@ -21,17 +21,28 @@ function progress(fraction, label) {
   if (label) $("splash-file").textContent = label;
 }
 
-async function fetchBytes(url, onChunk) {
-  const res = await fetch(url);
+async function fetchBytes(url, onChunk, compressedUrl) {
+  const useGzip = compressedUrl && typeof DecompressionStream === "function";
+  const res = await fetch(useGzip ? compressedUrl : url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  // Count compressed bytes before decompression, while keeping decoding streamed.
+  const body = useGzip ? res.body
+    .pipeThrough(new TransformStream({
+      transform(chunk, controller) {
+        onChunk(chunk.length);
+        controller.enqueue(chunk);
+      },
+    }))
+    .pipeThrough(new DecompressionStream("gzip"))
+    : res.body;
   const chunks = [];
   let length = 0;
-  for (const reader = res.body.getReader(); ;) {
+  for (const reader = body.getReader(); ;) {
     const { done, value } = await reader.read();
     if (done) break;
+    if (!useGzip) onChunk(value.length);
     chunks.push(value);
     length += value.length;
-    onChunk(value.length);
   }
   const bytes = new Uint8Array(length);
   let offset = 0;
@@ -42,20 +53,24 @@ async function fetchBytes(url, onChunk) {
 async function loadData() {
   await init();
   store = new Store();
-  const files = await (await fetch("data/index.json")).json();
-  const total = files.reduce((sum, f) => sum + f.size, 0);
+  const manifest = await (await fetch("data/index.json")).json();
+  const files = manifest.map((entry) => {
+    const useGzip = entry.gzip && Number.isFinite(entry.gzipSize) && typeof DecompressionStream === "function";
+    return { ...entry, gzip: useGzip ? entry.gzip : undefined, downloadSize: useGzip ? entry.gzipSize : entry.size };
+  });
+  const total = files.reduce((sum, f) => sum + f.downloadSize, 0);
   const log = [];
   let done = 0; // bytes of fully processed files; downloading counts for half, parsing for the other half
-  for (const [i, { file, size }] of files.entries()) {
+  for (const [i, { file, downloadSize, gzip }] of files.entries()) {
     const step = `(${i + 1}/${files.length})`;
     let received = 0;
     try {
       progress(done / total, `Downloading ${file} ${step}`);
       const bytes = await fetchBytes(`data/${file}`, (n) => {
         received += n;
-        progress((done + Math.min(received, size) / 2) / total);
-      });
-      progress((done + size / 2) / total, `Reading ${file} ${step}`);
+        progress((done + Math.min(received, downloadSize) / 2) / total);
+      }, gzip ? `data/${gzip}` : undefined);
+      progress((done + downloadSize / 2) / total, `Reading ${file} ${step}`);
       await nextPaint();
       const before = store.size;
       store.load(bytes, {
@@ -71,7 +86,7 @@ async function loadData() {
       li.textContent = `${file}: ${e}`;
       $("splash-errors").append(li);
     }
-    done += size;
+    done += downloadSize;
   }
   progress(1, "Ready");
   const failed = log.filter((l) => l.startsWith("✗")).length;
