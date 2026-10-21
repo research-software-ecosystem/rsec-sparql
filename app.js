@@ -25,19 +25,22 @@ async function fetchBytes(url, onChunk, compressedUrl) {
   const useGzip = compressedUrl && typeof DecompressionStream === "function";
   const res = await fetch(useGzip ? compressedUrl : url);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  // Count downloaded bytes before decompression, while keeping decoding streamed.
-  const measured = res.body.pipeThrough(new TransformStream({
-    transform(chunk, controller) {
-      onChunk(chunk.length);
-      controller.enqueue(chunk);
-    },
-  }));
-  const body = useGzip ? measured.pipeThrough(new DecompressionStream("gzip")) : measured;
+  // Count compressed bytes before decompression, while keeping decoding streamed.
+  const body = useGzip ? res.body
+    .pipeThrough(new TransformStream({
+      transform(chunk, controller) {
+        onChunk(chunk.length);
+        controller.enqueue(chunk);
+      },
+    }))
+    .pipeThrough(new DecompressionStream("gzip"))
+    : res.body;
   const chunks = [];
   let length = 0;
   for (const reader = body.getReader(); ;) {
     const { done, value } = await reader.read();
     if (done) break;
+    if (!useGzip) onChunk(value.length);
     chunks.push(value);
     length += value.length;
   }
