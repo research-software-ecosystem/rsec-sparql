@@ -98,3 +98,12 @@ npm install
 npm run demo                                    # rewrites demo.gif
 CHROME=/usr/bin/chromium npm run demo -- out.gif   # other browser / output path
 ```
+
+## License
+
+The code of this site is released under the [MIT License](LICENSE).
+
+Third-party material keeps its own license:
+
+- the data in `data/` and on the published site comes from [research-software-ecosystem/content](https://github.com/research-software-ecosystem/content) ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)) and the [EDAM ontology](https://edamontology.org/) ([CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/));
+- [Oxigraph](https://github.com/oxigraph/oxigraph), vendored in `vendor/`, is licensed under MIT or Apache-2.0.
