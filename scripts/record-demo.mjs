@@ -16,7 +16,7 @@ const OUTPUT = path.resolve(process.argv[2] ?? path.join(ROOT, "demo.gif"));
 const CHROME = process.env.CHROME ?? "/usr/bin/google-chrome";
 const PORT = Number(process.env.PORT ?? 8765);
 const URL = `http://localhost:${PORT}/`;
-const WIDTH = 1000, HEIGHT = 640, GIF_WIDTH = 800;
+const WIDTH = 1000, HEIGHT = 900, GIF_WIDTH = 800;
 
 // Examples shown after the first one (ids from queries/index.json)
 const EXAMPLES = ["paper-q2", "tool-across-registries"];
@@ -52,15 +52,21 @@ async function record() {
     url = URL;
     await page.goto(url, { waitUntil: "domcontentloaded" }); await snap(60);
     while (await page.$("#splash")) { await sleep(1000); await snap(25); }
-    // The page runs the first example once the data is loaded
+    // The page runs the first example once the data is loaded: show the introduction,
+    // then scroll to the query and its results (below the sticky header)
     await page.waitForFunction(() => document.getElementById("info").textContent !== "");
+    await snap(250);
+    await page.evaluate(() => {
+      const header = document.querySelector(".site-header").offsetHeight;
+      window.scrollTo(0, document.querySelector(".panel").offsetTop - header - 12);
+    });
     await snap(400);
 
     for (const id of EXAMPLES) {
-      // Selecting an example runs it right away and puts #example=ID in the URL
+      // Selecting an example runs it right away and puts it in the URL (?query=…)
       await page.select("#examples", id);
-      await page.waitForFunction((id) => location.hash === `#example=${id}`, {}, id);
-      url = page.url();
+      await page.waitForFunction(() => new URLSearchParams(location.search).get("query") === document.getElementById("query").value);
+      url = decodeURIComponent(page.url().replace(/\+/g, " "));
       await snap(400);
     }
   } finally {
@@ -69,6 +75,12 @@ async function record() {
   return frames;
 }
 
+// Long ?query=… URLs don't fit in the address bar: show the start, on one line
+const shorten = (url) => {
+  const line = url.replace(/\s+/g, " ");
+  return line.length > 100 ? `${line.slice(0, 99)}…` : line;
+};
+
 function assemble(frames) {
   const args = [];
   frames.forEach(([png, url, delay], i) => {
@@ -76,10 +88,10 @@ function assemble(frames) {
     execFileSync("magick", [png, "-background", "#e8e8e8", "-gravity", "north", "-splice", "0x40",
       "-fill", "white", "-stroke", "#c8c8c8", "-draw", `roundrectangle 12,7 ${WIDTH - 12},33 13,13`,
       "-stroke", "none", "-fill", "#333", "-font", "DejaVu-Sans", "-pointsize", "15",
-      "-gravity", "northwest", "-annotate", "+28+12", url, "-resize", `${GIF_WIDTH}x`, out]);
+      "-gravity", "northwest", "-annotate", "+28+12", shorten(url), "-resize", `${GIF_WIDTH}x`, out]);
     args.push("-delay", String(delay), out);
   });
-  execFileSync("magick", [...args, "-loop", "0", "-colors", "96", "-layers", "OptimizeFrame", "-layers", "OptimizeTransparency", OUTPUT]);
+  execFileSync("magick", [...args, "-loop", "0", "-colors", "96", "-layers", "OptimizeFrame", OUTPUT]);
 }
 
 const server = spawn("python3", ["-m", "http.server", String(PORT), "--bind", "127.0.0.1"], { cwd: ROOT, stdio: "ignore" });

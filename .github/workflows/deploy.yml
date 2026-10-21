@@ -30,7 +30,7 @@ jobs:
 
     - name: Assemble site
       run: |
-        cp index.html app.js config.js _site/
+        cp index.html app.js config.js highlight.js _site/
         cp -r vendor queries _site/
         du -sh _site
 

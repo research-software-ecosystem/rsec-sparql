@@ -2,53 +2,171 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>SPARQL – Oxigraph</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Query the RSEc knowledge graph with SPARQL · ELIXIR Research Software Ecosystem</title>
+<meta name="description" content="Ask your own questions about thousands of bioinformatics tools and workflows: query the ELIXIR Research Software Ecosystem knowledge graph with SPARQL, right in your browser.">
+<link rel="icon" href="https://research-software-ecosystem.org/assets/img/favicon-32x32.png" sizes="32x32">
+<link rel="apple-touch-icon" href="https://research-software-ecosystem.org/assets/img/apple-touch-icon.png">
 <style>
-  body { font: 14px/1.4 system-ui, sans-serif; max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; color: #222; }
-  h1 { font-size: 1.2rem; margin: 0 0 .5rem; }
-  #status { color: #666; font-size: 12px; margin-bottom: .5rem; }
-  #status pre { background: none; padding: 0; margin: .3rem 0 0; white-space: pre-wrap; }
-  #splash { position: fixed; inset: 0; background: #fff; display: flex; align-items: center; justify-content: center; transition: opacity .4s; z-index: 10; }
+  /* Colours and shapes of the RSEc website (research-software-ecosystem.org) */
+  :root {
+    --rsec-navy: #023452;
+    --rsec-navy-hover: #07506f;
+    --rsec-ink: #23343e;
+    --rsec-muted: #5d6b73;
+    --rsec-orange: #f17c21;
+    --rsec-green: #79b473;
+    --rsec-border: #dce6e9;
+    --rsec-surface: #f5f8f9;
+    --rsec-link: #075b78;
+    --rsec-shadow: 0 16px 40px rgba(2, 52, 82, 0.09);
+    --font: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", "Noto Sans", "Liberation Sans", Arial, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 16px/1.65 var(--font); color: var(--rsec-ink); background: #fff; }
+  a { color: var(--rsec-link); }
+  a:hover { color: var(--rsec-navy); }
+  :focus-visible { outline: 3px solid rgba(241, 124, 33, 0.35); outline-offset: 2px; }
+
+  .site-header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+    padding: .75rem max(1rem, calc((100% - 1200px) / 2)); background: rgba(255, 255, 255, 0.96);
+    border-bottom: 1px solid rgba(2, 52, 82, 0.1); box-shadow: 0 4px 18px rgba(2, 52, 82, 0.05); }
+  .site-header img { display: block; height: 44px; width: auto; }
+  .site-header nav { display: flex; gap: 1.25rem; font-weight: 600; font-size: .95rem; }
+  .site-header nav a { color: var(--rsec-navy); text-decoration: none; }
+  .site-header nav a:hover { color: var(--rsec-orange); }
+
+  main { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem 2rem; }
+
+  .intro { margin: .25rem 0 1.25rem; }
+  h1 { margin: 0 0 .3rem; color: var(--rsec-navy); font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2rem); font-weight: 780; line-height: 1.15; letter-spacing: -0.03em; }
+  .hl { background-image: linear-gradient(transparent 82%, rgba(241, 124, 33, 0.32) 82%); }
+  .intro p { margin: 0; color: var(--rsec-muted); }
+
+  .panel { padding: clamp(1rem, 3vw, 1.5rem); border: 1px solid var(--rsec-border); border-radius: 20px; background: #fff; box-shadow: var(--rsec-shadow); }
+  .field-label { display: block; margin-bottom: .35rem; font-weight: 650; color: var(--rsec-navy); }
+  select { font: inherit; color: var(--rsec-ink); border: 1px solid #9bb1bc; border-radius: 11px; background: #fff; }
+  select { width: min(100%, 40rem); padding: .55rem .75rem; }
+  #example-desc { margin: .45rem 0 1rem; min-height: 1.65em; color: var(--rsec-muted); }
+  /* Syntax highlighting: the coloured copy (#highlight) sits behind the textarea, whose text is
+     transparent; both must share font, padding, border and wrapping (none) to line up */
+  .editor { position: relative; border: 1px solid #9bb1bc; border-radius: 11px; background: var(--rsec-surface); }
+  .editor:focus-within { outline: 3px solid rgba(241, 124, 33, 0.35); outline-offset: 2px; }
+  .editor textarea, .editor pre { margin: 0; padding: .85rem 1rem; border: 0; font: 14px/1.55 var(--mono); tab-size: 2; white-space: pre; overflow-wrap: normal; }
+  .editor textarea { position: relative; display: block; width: 100%; height: 15rem; resize: vertical; overflow: auto;
+    color: transparent; caret-color: var(--rsec-ink); background: transparent; outline: none; }
+  .editor textarea::selection { color: transparent; background: rgba(2, 52, 82, 0.18); }
+  .editor pre { position: absolute; inset: 0; overflow: hidden; padding-right: calc(1rem + 20px); color: var(--rsec-ink); pointer-events: none; }
+  .tok-keyword { color: var(--rsec-navy); font-weight: 700; }
+  .tok-variable { color: #b4530a; }
+  .tok-iri { color: var(--rsec-link); }
+  .tok-pname { color: #3f7a3a; }
+  .tok-string { color: #9a3412; }
+  .tok-number { color: #6d28d9; }
+  .tok-comment { color: var(--rsec-muted); font-style: italic; }
+
+  .actions { display: flex; align-items: center; flex-wrap: wrap; gap: .6rem; margin-top: .9rem; }
+  .btn { font: inherit; font-weight: 650; padding: .6rem 1.1rem; border-radius: 11px; cursor: pointer; }
+  .btn.primary { color: #fff; background: var(--rsec-navy); border: 1px solid var(--rsec-navy); }
+  .btn.primary:hover:not(:disabled) { background: var(--rsec-navy-hover); }
+  .btn.primary:disabled { opacity: .5; cursor: progress; }
+  .btn.secondary { color: var(--rsec-navy); background: transparent; border: 1px solid #9bb1bc; }
+  .btn.secondary:hover { border-color: var(--rsec-navy); }
+  #info { color: var(--rsec-muted); font-weight: 600; }
+  .hint { margin-left: auto; color: var(--rsec-muted); font-size: .85rem; }
+  kbd { font: .8rem var(--mono); padding: .05rem .35rem; border: 1px solid var(--rsec-border); border-radius: 5px; background: var(--rsec-surface); }
+
+  #status { margin-top: 1rem; color: var(--rsec-muted); font-size: .9rem; }
+  #status summary { cursor: pointer; }
+  #status p { margin: .5rem 0; }
+  #status pre { margin: .5rem 0 0; padding: .75rem 1rem; font: 12px/1.5 var(--mono); white-space: pre-wrap; background: var(--rsec-surface); border-radius: 11px; }
+
+  #results:not(:empty) { margin-top: 1.5rem; overflow: auto; max-height: 70vh; border: 1px solid var(--rsec-border); border-radius: 14px; }
+  #results table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  #results th, #results td { padding: .5rem .75rem; text-align: left; vertical-align: top; word-break: break-word; border-bottom: 1px solid var(--rsec-border); }
+  #results th { position: sticky; top: 0; color: var(--rsec-navy); font-weight: 700; background: var(--rsec-surface); }
+  #results tr:last-child td { border-bottom: 0; }
+  #results pre { margin: 0; padding: 1rem; font: 13px/1.5 var(--mono); white-space: pre-wrap; }
+  .err { color: #b42318; }
+
+  footer { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem 2.5rem; color: var(--rsec-muted); font-size: .9rem; border-top: 1px solid var(--rsec-border); }
+
+  #splash { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; transition: opacity .4s;
+    background: radial-gradient(circle at 85% 15%, rgba(121, 180, 115, 0.18), transparent 35%), linear-gradient(135deg, #f2f7f8 0%, #fff 60%, #fff7f0 100%); }
   #splash.done { opacity: 0; pointer-events: none; }
-  #splash > div { width: min(480px, 90vw); }
-  #splash h2 { font-size: 1.1rem; font-weight: 600; margin: 0 0 .8rem; }
-  .bar { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
-  #bar { height: 100%; width: 0; background: #06c; transition: width .2s; }
-  #splash-text { color: #666; font-size: 12px; margin-top: .5rem; display: flex; justify-content: space-between; gap: 1rem; }
-  #splash-errors { font-size: 12px; padding-left: 1rem; }
-  #examples-bar { margin: .5rem 0 .3rem; }
-  #examples { max-width: 100%; }
-  #example-desc { color: #666; font-size: 12px; margin: 0 0 .3rem; min-height: 1em; }
-  textarea { width: 100%; height: 12rem; font: 13px/1.4 ui-monospace, monospace; box-sizing: border-box; padding: .5rem; }
-  button { padding: .3rem 1rem; margin: .3rem 0; }
-  #info { color: #666; margin-left: .5rem; }
-  table { border-collapse: collapse; width: 100%; font-size: 13px; }
-  th, td { border: 1px solid #ddd; padding: .25rem .4rem; text-align: left; vertical-align: top; word-break: break-all; }
-  th { background: #f4f4f4; position: sticky; top: 0; }
-  pre { background: #f6f6f6; padding: .5rem; overflow: auto; }
-  .err { color: #b00; }
-  a { color: #06c; }
+  #splash > div { width: min(520px, 90vw); }
+  #splash img { height: 56px; width: auto; margin-bottom: 1.5rem; }
+  #splash h2 { margin: 0 0 .25rem; color: var(--rsec-navy); font-size: 1.6rem; font-weight: 780; letter-spacing: -0.03em; line-height: 1.15; }
+  #splash p { margin: 0 0 1.25rem; color: var(--rsec-muted); }
+  .bar { height: 10px; background: var(--rsec-border); border-radius: 999px; overflow: hidden; }
+  #bar { height: 100%; width: 0; background: linear-gradient(90deg, var(--rsec-navy), var(--rsec-navy-hover)); border-radius: 999px; }
+  #splash-text { display: flex; justify-content: space-between; gap: 1rem; margin-top: .6rem; color: var(--rsec-muted); font-size: .85rem; }
+  #splash-pct { font-weight: 700; color: var(--rsec-navy); }
+  #splash-errors { padding-left: 1.2rem; font-size: .85rem; }
 </style>
 </head>
 <body>
-<div id="splash" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+<div id="splash" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="Loading the RSEc knowledge graph">
   <div>
-    <h2>Loading RDF datasets…</h2>
+    <img src="https://research-software-ecosystem.org/assets/img/logo-rsec-full.svg" alt="ELIXIR Research Software Ecosystem">
+    <h2>Loading the RSEc knowledge graph…</h2>
+    <p>The metadata of thousands of tools and workflows is being loaded into your browser. This takes a few seconds.</p>
     <div class="bar"><div id="bar"></div></div>
-    <div id="splash-text"><span id="splash-file">Starting Oxigraph</span><span id="splash-pct">0%</span></div>
+    <div id="splash-text"><span id="splash-file">Starting the query engine</span><span id="splash-pct">0%</span></div>
     <ul id="splash-errors" class="err"></ul>
   </div>
 </div>
-<h1>SPARQL over local datasets</h1>
-<details id="status"><summary></summary><pre id="log"></pre></details>
-<div id="examples-bar"><label>Example query <select id="examples"><option value="">Custom query</option></select></label></div>
-<div id="example-desc"></div>
-<textarea id="query" spellcheck="false">SELECT ?g (COUNT(*) AS ?triples)
+
+<header class="site-header">
+  <a href="https://research-software-ecosystem.org/"><img src="https://research-software-ecosystem.org/assets/img/logo-rsec-full.svg" alt="ELIXIR Research Software Ecosystem"></a>
+  <nav>
+    <a href="https://research-software-ecosystem.org/">RSEc website</a>
+    <a href="https://github.com/research-software-ecosystem/sparql">Source code</a>
+  </nav>
+</header>
+
+<main>
+  <section class="intro">
+    <h1>Query the <span class="hl">RSEc knowledge graph</span> with SPARQL</h1>
+    <p>Linked metadata of bioinformatics tools and workflows, gathered by the ELIXIR Research Software Ecosystem from bio.tools, Bioconda, BioContainers, Galaxy, WorkflowHub and more. <a href="https://research-software-ecosystem.org/">Learn more about RSEc</a></p>
+  </section>
+
+  <section class="panel" aria-label="Query">
+    <label class="field-label" for="examples">Start from an example</label>
+    <select id="examples"><option value="">Your own query</option></select>
+    <p id="example-desc"></p>
+    <label class="field-label" for="query">SPARQL query</label>
+    <div class="editor">
+      <pre id="highlight" aria-hidden="true"></pre>
+      <textarea id="query" spellcheck="false" autocapitalize="off" autocomplete="off">SELECT ?g (COUNT(*) AS ?triples)
 WHERE { GRAPH ?g { ?s ?p ?o } }
 GROUP BY ?g
 ORDER BY DESC(?triples)</textarea>
-<div><button id="run" disabled>Run (Ctrl+Enter)</button> <button id="copy-link">Copy link</button><span id="info"></span></div>
-<div id="results"></div>
+    </div>
+    <div class="actions">
+      <button id="run" class="btn primary" disabled>Run query</button>
+      <button id="copy-link" class="btn secondary">Copy link to this query</button>
+      <span id="info"></span>
+      <span class="hint"><kbd>Ctrl</kbd> + <kbd>Enter</kbd> also runs the query</span>
+    </div>
+    <details id="status">
+      <summary>Loading the knowledge graph…</summary>
+      <p>Each source file is loaded as its own named graph <code>&lt;urn:dataset:FILE&gt;</code>. Queries see all of them together; use <code>GRAPH ?g { … }</code> to tell them apart.</p>
+      <pre id="log"></pre>
+    </details>
+  </section>
+
+  <section id="results" aria-live="polite"></section>
+</main>
+
+<footer>
+  Part of the <a href="https://research-software-ecosystem.org/">ELIXIR Research Software Ecosystem</a>
+  · Data updated daily from the <a href="https://github.com/research-software-ecosystem/content">RSEc content repository</a>
+  · Query engine: <a href="https://github.com/oxigraph/oxigraph">Oxigraph</a>
+  · <a href="https://github.com/research-software-ecosystem/sparql">Source code</a>
+</footer>
+
 <script type="module" src="app.js"></script>
 </body>
 </html>

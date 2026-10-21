@@ -1,8 +1,10 @@
-# sparql
+# Query the RSEc knowledge graph with SPARQL
 
 **Live site: https://research-software-ecosystem.github.io/sparql/**
 
-Static website to query local Turtle datasets with SPARQL in the browser, using [Oxigraph](https://github.com/oxigraph/oxigraph) compiled to WebAssembly (vendored in `vendor/`, v0.5.11).
+Ask your own questions about the bioinformatics tools and workflows gathered by the [ELIXIR Research Software Ecosystem](https://research-software-ecosystem.org/) (RSEc): their metadata from bio.tools, Bioconda, BioContainers, Galaxy, WorkflowHub, Debian Med and BIII, linked into a single knowledge graph and described with the EDAM ontology.
+
+The site is static and runs entirely in the browser: the RDF data is loaded into [Oxigraph](https://github.com/oxigraph/oxigraph) compiled to WebAssembly (vendored in `vendor/`, v0.5.11). Its look follows the RSEc website; the logo and favicon are loaded from research-software-ecosystem.org.
 
 - `data/*.ttl` — datasets, each loaded into its own named graph `<urn:dataset:FILE>`
 - `data/index.json` — list of files to load, with their sizes (used by the loading bar)
@@ -25,7 +27,7 @@ scripts/fetch-data.sh DEST  # same download into DEST, without starting the site
 The site is published to GitHub Pages by [.github/workflows/deploy.yml](.github/workflows/deploy.yml), on every push to `main`, every day at 04:00 UTC, and on demand (*Actions → Deploy to GitHub Pages → Run workflow*). The workflow:
 
 1. runs `scripts/fetch-data.sh`, which clones only the `datasets/` folder of [research-software-ecosystem/content](https://github.com/research-software-ecosystem/content), applies a temporary fix to `bioconda-dump.ttl` identifiers ([content#4783](https://github.com/research-software-ecosystem/content/issues/4783)) and downloads the latest `EDAM.owl` from https://edamontology.org/EDAM.owl,
-2. assembles `index.html`, `app.js`, `config.js`, `vendor/`, `queries/` and the data into `_site/`,
+2. assembles `index.html`, `app.js`, `config.js`, `highlight.js`, `vendor/`, `queries/` and the data into `_site/`,
 3. runs every example query against that data and stops if one fails or returns nothing (see [Example queries](#example-queries)),
 4. pushes `_site/` to the `gh-pages` branch, which GitHub Pages serves at https://research-software-ecosystem.github.io/sparql/.
 
@@ -63,12 +65,17 @@ To stop the server, press Ctrl+C in its terminal.
 
 ## Example queries
 
-The **Example query** list is built from [queries/index.json](queries/index.json); each entry has an `id`, a `group` (shown as a heading in the list), a `title`, a `description` and the `file` holding the query in [queries/](queries/). The page opens with the first example and runs it once the data is loaded.
+The **Start from an example** list is built from [queries/index.json](queries/index.json); each entry has an `id`, a `group` (shown as a heading in the list), a `title`, a `description` and the `file` holding the query in [queries/](queries/). Without a query in the URL, the page opens with the first example and runs it once the data is loaded.
 
-Queries can be linked to directly:
+## Linking to a query
 
-- `…/sparql/#example=paper-q1` opens and runs an example (by its `id`),
-- `…/sparql/#query=<URL-encoded SPARQL>` opens and runs any query; the **Copy link** button builds this link for the query in the editor.
+Any query can be opened, and run as soon as the data is loaded, by passing it URL-encoded in the `query` parameter:
+
+```
+https://research-software-ecosystem.github.io/sparql/?query=SELECT%20(COUNT(*)%20AS%20%3Fstatements)%20WHERE%20%7B%20%3Fs%20%3Fp%20%3Fo%20%7D
+```
+
+The address bar always holds the query currently in the editor, so it can be bookmarked or shared as is; the **Copy link to this query** button copies it. To build such a link from a script, encode the query, e.g. with `encodeURIComponent()` in JavaScript or `urllib.parse.quote()` in Python. If the text is identical to one of the examples, that example is selected in the list.
 
 To add an example, put the query in a new `.rq` file in `queries/`, add an entry to `queries/index.json`, then check that all examples still work:
 
