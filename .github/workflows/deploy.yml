@@ -23,34 +23,29 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v7
 
-    - name: Checkout datasets from content repository
-      uses: actions/checkout@v7
-      with:
-        repository: research-software-ecosystem/content
-        ref: master
-        path: content
-        sparse-checkout: datasets
-        filter: blob:none
-
-    # TEMPORARY: bioconda-dump.ttl in the content repository writes identifiers as unexpanded
-    # <biotools:XYZ> / <bioconda:XYZ> IRIs, which breaks links to bio.tools records. Expand them
-    # as the previous dumps did; this is a no-op once the dump is fixed upstream, then remove it.
-    - name: Expand biotools/bioconda prefixed IRIs (temporary)
-      run: |
-        grep -c -E '<(biotools|bioconda):' content/datasets/*.ttl | grep -v ':0$' || echo "nothing to rewrite"
-        sed -i -E \
-          -e 's#<biotools:#<https://bio.tools/#g' \
-          -e 's#<bioconda:#<https://github.com/bioconda/bioconda-recipes/tree/master/recipes/#g' \
-          content/datasets/*.ttl
+    # Datasets from research-software-ecosystem/content and the latest EDAM.owl, as for local runs
+    # (scripts/fetch-data.sh also holds the temporary fix for bioconda-dump.ttl identifiers)
+    - name: Fetch data
+      run: scripts/fetch-data.sh _site/data
 
     - name: Assemble site
       run: |
-        mkdir -p _site/data
-        cp index.html app.js _site/
-        cp -r vendor _site/
-        curl --fail --location --retry 3 -o _site/data/EDAM.owl https://edamontology.org/EDAM.owl
-        ./update-data.sh content/datasets _site/data
+        cp index.html app.js config.js _site/
+        cp -r vendor queries _site/
         du -sh _site
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v7
+      with:
+        node-version: 22
+        cache: npm
+
+    - name: Install Node.js dependencies
+      run: npm ci --ignore-scripts
+
+    # Don't publish if an example query errors or stops returning results (e.g. after an upstream data change)
+    - name: Check example queries
+      run: npm run check-queries -- _site/data _site/queries
 
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v4

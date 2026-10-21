@@ -1,9 +1,8 @@
 import init, { Store, namedNode } from "./vendor/web.js";
+import { GRAPH_BASE, formatOf } from "./config.js";
 
 const $ = (id) => document.getElementById(id);
 let store;
-const GRAPH_BASE = "urn:dataset:";
-const FORMATS = { ttl: "text/turtle", owl: "application/rdf+xml", rdf: "application/rdf+xml", nt: "application/n-triples" };
 
 // Let the browser repaint before a long synchronous step (parsing blocks the main thread).
 // requestAnimationFrame never fires in background tabs, so skip it when hidden and
@@ -59,7 +58,7 @@ async function loadData() {
       await nextPaint();
       const before = store.size;
       store.load(bytes, {
-        format: FORMATS[file.split(".").pop()] ?? "text/turtle",
+        format: formatOf(file),
         base_iri: new URL(`data/${file}`, location.href).href,
         to_graph_name: namedNode(GRAPH_BASE + file),
         lenient: true,
@@ -131,10 +130,96 @@ function run() {
   }
 }
 
+// Example queries: listed in queries/index.json, one .rq file each.
+// An example can be linked to with #example=ID, any query with #query=<encoded SPARQL>.
+let examples = [];
+
+async function loadExamples() {
+  const list = await (await fetch("queries/index.json")).json();
+  examples = await Promise.all(list.map(async (e) => ({ ...e, text: await (await fetch(`queries/${e.file}`)).text() })));
+  const groups = new Map();
+  for (const e of examples) {
+    if (!groups.has(e.group)) {
+      const optgroup = document.createElement("optgroup");
+      optgroup.label = e.group;
+      $("examples").append(optgroup);
+      groups.set(e.group, optgroup);
+    }
+    groups.get(e.group).append(new Option(e.title, e.id));
+  }
+}
+
+const exampleWithText = (text) => examples.find((e) => e.text === text);
+
+function showQuery(text) {
+  const example = exampleWithText(text);
+  $("query").value = text;
+  // Show the start of the query (a focused textarea would otherwise scroll to the end)
+  $("query").setSelectionRange(0, 0);
+  $("query").scrollTop = 0;
+  $("examples").value = example?.id ?? "";
+  $("example-desc").textContent = example?.description ?? "";
+}
+
+// Show the query named by the URL hash, if any; returns whether it did
+function applyHash() {
+  const params = new URLSearchParams(location.hash.slice(1));
+  const example = examples.find((e) => e.id === params.get("example"));
+  const text = example?.text ?? params.get("query");
+  if (text === null || text === undefined) return false;
+  showQuery(text);
+  return true;
+}
+
+function shareUrl() {
+  const example = exampleWithText($("query").value);
+  const hash = example ? `example=${example.id}` : `query=${encodeURIComponent($("query").value)}`;
+  return `${location.origin}${location.pathname}#${hash}`;
+}
+
+const dataReady = () => !$("run").disabled;
+
+$("examples").onchange = () => {
+  const example = examples.find((e) => e.id === $("examples").value);
+  if (!example) return; // "Custom query": keep the editor as it is
+  showQuery(example.text);
+  history.replaceState(null, "", `#example=${example.id}`);
+  if (dataReady()) run();
+};
+
+$("query").oninput = () => {
+  const example = exampleWithText($("query").value);
+  $("examples").value = example?.id ?? "";
+  $("example-desc").textContent = example?.description ?? "";
+  if (location.hash) history.replaceState(null, "", location.pathname + location.search);
+};
+
+$("copy-link").onclick = async () => {
+  const url = shareUrl();
+  history.replaceState(null, "", url);
+  try {
+    await navigator.clipboard.writeText(url);
+    $("copy-link").textContent = "Link copied";
+    setTimeout(() => ($("copy-link").textContent = "Copy link"), 1500);
+  } catch {
+    prompt("Copy this link:", url);
+  }
+};
+
+window.onhashchange = () => { if (applyHash() && dataReady()) run(); };
+
 $("run").onclick = run;
-$("query").onkeydown = (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && !$("run").disabled) run(); };
-loadData().catch((e) => {
-  $("splash").querySelector("h2").textContent = "Loading failed";
-  $("splash-file").textContent = "";
-  $("splash-errors").textContent = String(e);
-});
+$("query").onkeydown = (e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && dataReady()) run(); };
+
+// Start with the query from the URL, or the first example
+const examplesLoaded = loadExamples()
+  .then(() => { if (!applyHash() && examples.length) showQuery(examples[0].text); })
+  .catch((e) => console.warn("Example queries unavailable:", e));
+
+loadData()
+  .then(async () => { await examplesLoaded; run(); })
+  .catch((e) => {
+    $("splash").querySelector("h2").textContent = "Loading failed";
+    $("splash-file").textContent = "";
+    $("splash-errors").textContent = String(e);
+  });

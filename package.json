@@ -3,9 +3,12 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "demo": "node scripts/record-demo.mjs"
+    "start": "./start.sh",
+    "demo": "node scripts/record-demo.mjs",
+    "check-queries": "node scripts/check-queries.mjs"
   },
   "devDependencies": {
+    "oxigraph": "0.5.11",
     "puppeteer-core": "^25.13.0"
   }
 }

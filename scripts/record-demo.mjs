@@ -1,5 +1,6 @@
-// Record demo.gif: open the site in headless Chrome, capture the loading splash screen,
-// type a query, run it, then assemble the screenshots into a GIF with ImageMagick.
+// Record demo.gif: open the site in headless Chrome, capture the loading splash screen and the
+// first example's results, pick a few more examples from the list, then assemble the screenshots
+// into a GIF with ImageMagick.
 //
 // Usage: npm run demo [-- output.gif]
 // Env:   CHROME=/path/to/chrome (default: /usr/bin/google-chrome), PORT=8765
@@ -17,19 +18,8 @@ const PORT = Number(process.env.PORT ?? 8765);
 const URL = `http://localhost:${PORT}/`;
 const WIDTH = 1000, HEIGHT = 640, GIF_WIDTH = 800;
 
-const QUERY = `PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
-PREFIX schema: <http://schema.org/>
-PREFIX bioconda: <https://github.com/bioconda/bioconda-recipes/tree/master/recipes/>
-PREFIX edam: <http://edamontology.org/>
-
-SELECT ?bioconda ?op_label WHERE {
-  VALUES ?bioconda { bioconda:admixture bioconda:abricate }
-  ?bioconda schema:identifier ?id .
-  ?id schema:featureList ?op .
-  ?op rdfs:subClassOf* ?parent .
-  ?parent rdfs:subClassOf+ edam:operation_0004 ;
-          rdfs:label ?op_label .
-}`;
+// Examples shown after the first one (ids from queries/index.json)
+const EXAMPLES = ["paper-q2", "tool-across-registries"];
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const work = fs.mkdtempSync(path.join(os.tmpdir(), "demo-gif-"));
@@ -62,21 +52,17 @@ async function record() {
     url = URL;
     await page.goto(url, { waitUntil: "domcontentloaded" }); await snap(60);
     while (await page.$("#splash")) { await sleep(1000); await snap(25); }
-    await snap(150);
-
-    await page.$eval("#query", (t) => { t.value = ""; t.focus(); });
-    await snap(40);
-    for (const line of QUERY.split("\n")) {
-      await page.$eval("#query", (t, l) => { t.value += (t.value ? "\n" : "") + l; t.scrollTop = t.scrollHeight; }, line);
-      if (line.trim()) await snap(18);
-    }
-    await page.$eval("#query", (t) => (t.scrollTop = 0));
-    await snap(80);
-
-    await page.hover("#run"); await page.click("#run");
+    // The page runs the first example once the data is loaded
     await page.waitForFunction(() => document.getElementById("info").textContent !== "");
-    await page.evaluate(() => document.getElementById("results").scrollIntoView({ block: "end" }));
-    await snap(500);
+    await snap(400);
+
+    for (const id of EXAMPLES) {
+      // Selecting an example runs it right away and puts #example=ID in the URL
+      await page.select("#examples", id);
+      await page.waitForFunction((id) => location.hash === `#example=${id}`, {}, id);
+      url = page.url();
+      await snap(400);
+    }
   } finally {
     await browser.close();
   }
