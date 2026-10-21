@@ -1,0 +1,49 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 4 * * *'  # daily, to pick up new datasets from the content repository
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+
+    - name: Checkout datasets from content repository
+      uses: actions/checkout@v7
+      with:
+        repository: research-software-ecosystem/content
+        ref: master
+        path: content
+        sparse-checkout: datasets
+        filter: blob:none
+
+    - name: Assemble site
+      run: |
+        mkdir -p _site/data
+        cp index.html app.js _site/
+        cp -r vendor _site/
+        curl --fail --location --retry 3 -o _site/data/EDAM.owl https://edamontology.org/EDAM.owl
+        ./update-data.sh content/datasets _site/data
+        du -sh _site
+
+    - name: Deploy
+      uses: peaceiris/actions-gh-pages@v4
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: _site
+        force_orphan: true

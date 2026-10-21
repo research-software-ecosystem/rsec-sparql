@@ -1,5 +1,5 @@
 {
-  "name": "rsec-sparql",
+  "name": "sparql",
   "private": true,
   "type": "module",
   "scripts": {

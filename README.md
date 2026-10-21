@@ -1,4 +1,6 @@
-# rsec-sparql
+# sparql
+
+**Live site: https://research-software-ecosystem.github.io/sparql/**
 
 Static website to query local Turtle datasets with SPARQL in the browser, using [Oxigraph](https://github.com/oxigraph/oxigraph) compiled to WebAssembly (vendored in `vendor/`, v0.5.11).
 
@@ -10,7 +12,19 @@ Static website to query local Turtle datasets with SPARQL in the browser, using 
 
 ```bash
 ./update-data.sh            # copies ~/content/datasets/*.ttl and rebuilds data/index.json
+./update-data.sh SRC DEST   # copies SRC/*.ttl into DEST and rebuilds DEST/index.json
 ```
+
+The committed `data/` folder is only used when running locally; the published site fetches its own copy (see below).
+
+## Publishing
+
+The site is published to GitHub Pages by [.github/workflows/deploy.yml](.github/workflows/deploy.yml), on every push to `main`, every day at 04:00 UTC, and on demand (*Actions → Deploy to GitHub Pages → Run workflow*). The workflow:
+
+1. checks out only the `datasets/` folder of [research-software-ecosystem/content](https://github.com/research-software-ecosystem/content),
+2. downloads the latest `EDAM.owl` from https://edamontology.org/EDAM.owl,
+3. assembles `index.html`, `app.js`, `vendor/` and the data into `_site/` (using `update-data.sh`),
+4. pushes `_site/` to the `gh-pages` branch, which GitHub Pages serves at https://research-software-ecosystem.github.io/sparql/.
 
 ## Run locally
 
@@ -26,8 +40,8 @@ The datasets (`data/`) and Oxigraph (`vendor/`) are committed in the repository,
 1. Get the code:
 
    ```bash
-   git clone https://github.com/research-software-ecosystem/rsec-sparql.git
-   cd rsec-sparql
+   git clone https://github.com/research-software-ecosystem/sparql.git
+   cd sparql
    ```
 
 2. Serve the repository root over HTTP. Opening `index.html` directly (`file://`) does not work, because browsers block loading the `.wasm` file and the datasets from disk:
