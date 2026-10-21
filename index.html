@@ -6,7 +6,16 @@
 <style>
   body { font: 14px/1.4 system-ui, sans-serif; max-width: 1200px; margin: 1.5rem auto; padding: 0 1rem; color: #222; }
   h1 { font-size: 1.2rem; margin: 0 0 .5rem; }
-  #status { color: #666; font-size: 12px; white-space: pre-line; margin-bottom: .5rem; }
+  #status { color: #666; font-size: 12px; margin-bottom: .5rem; }
+  #status pre { background: none; padding: 0; margin: .3rem 0 0; white-space: pre-wrap; }
+  #splash { position: fixed; inset: 0; background: #fff; display: flex; align-items: center; justify-content: center; transition: opacity .4s; z-index: 10; }
+  #splash.done { opacity: 0; pointer-events: none; }
+  #splash > div { width: min(480px, 90vw); }
+  #splash h2 { font-size: 1.1rem; font-weight: 600; margin: 0 0 .8rem; }
+  .bar { height: 8px; background: #eee; border-radius: 4px; overflow: hidden; }
+  #bar { height: 100%; width: 0; background: #06c; transition: width .2s; }
+  #splash-text { color: #666; font-size: 12px; margin-top: .5rem; display: flex; justify-content: space-between; gap: 1rem; }
+  #splash-errors { font-size: 12px; padding-left: 1rem; }
   textarea { width: 100%; height: 12rem; font: 13px/1.4 ui-monospace, monospace; box-sizing: border-box; padding: .5rem; }
   button { padding: .3rem 1rem; margin: .3rem 0; }
   #info { color: #666; margin-left: .5rem; }
@@ -19,8 +28,16 @@
 </style>
 </head>
 <body>
+<div id="splash" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+  <div>
+    <h2>Loading RDF datasets…</h2>
+    <div class="bar"><div id="bar"></div></div>
+    <div id="splash-text"><span id="splash-file">Starting Oxigraph</span><span id="splash-pct">0%</span></div>
+    <ul id="splash-errors" class="err"></ul>
+  </div>
+</div>
 <h1>SPARQL over local datasets</h1>
-<div id="status">Loading…</div>
+<details id="status"><summary></summary><pre id="log"></pre></details>
 <textarea id="query" spellcheck="false">SELECT ?g (COUNT(*) AS ?triples)
 WHERE { GRAPH ?g { ?s ?p ?o } }
 GROUP BY ?g

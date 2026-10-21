@@ -3,7 +3,7 @@
 Static website to query local Turtle datasets with SPARQL in the browser, using [Oxigraph](https://github.com/oxigraph/oxigraph) compiled to WebAssembly (vendored in `vendor/`, v0.5.11).
 
 - `data/*.ttl` — datasets, each loaded into its own named graph `<urn:dataset:FILE>`
-- `data/index.json` — list of files to load
+- `data/index.json` — list of files to load, with their sizes (used by the loading bar)
 - Queries run with the default graph as the union of all named graphs.
 
 ## Refresh data
@@ -38,7 +38,7 @@ The datasets (`data/`) and Oxigraph (`vendor/`) are committed in the repository,
 
    Other options: `npx serve -l 8000`, or `php -S localhost:8000`.
 
-3. Open http://localhost:8000. The status area lists each dataset as it loads (about 75 MB, roughly 1.2 million triples). The **Run** button is enabled once everything is loaded; this takes from a few seconds up to about 30 s depending on the machine, and the tab needs several hundred MB of memory.
+3. Open http://localhost:8000. A splash screen with a loading bar shows which dataset is being downloaded and parsed (about 75 MB, roughly 1.2 million triples). It disappears once everything is loaded; this takes from a few seconds up to about 30 s depending on the machine, and the tab needs several hundred MB of memory. Files that fail to load are listed on the splash screen and in the collapsible summary above the query box.
 
 4. Type a SPARQL query and press **Run** or Ctrl+Enter. Each file is in its own named graph `<urn:dataset:FILENAME>`, and the default graph is the union of all of them, so queries can either ignore graphs or use `GRAPH ?g { … }`.
 

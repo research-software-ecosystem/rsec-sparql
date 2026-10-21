@@ -1,14 +1,50 @@
 [
- "2024-06-19-wfhub-dump.ttl",
- "bioconda-dump.ttl",
- "biocontainers-dump.ttl",
- "bioschemas-biii-dump.ttl",
- "bioschemas-dump.ttl",
- "bise-ontology-biii-dump.ttl",
- "debian-dump.ttl",
- "galaxy-dump.ttl",
- "galaxyworkflow-dump.ttl",
- "workflowhub-dump.ttl",
- "workflow_hub.ttl",
- "EDAM.owl"
+ {
+  "file": "2024-06-19-wfhub-dump.ttl",
+  "size": 5831466
+ },
+ {
+  "file": "bioconda-dump.ttl",
+  "size": 1077587
+ },
+ {
+  "file": "biocontainers-dump.ttl",
+  "size": 3802025
+ },
+ {
+  "file": "bioschemas-biii-dump.ttl",
+  "size": 1271628
+ },
+ {
+  "file": "bioschemas-dump.ttl",
+  "size": 36346686
+ },
+ {
+  "file": "bise-ontology-biii-dump.ttl",
+  "size": 2024513
+ },
+ {
+  "file": "debian-dump.ttl",
+  "size": 132976
+ },
+ {
+  "file": "galaxy-dump.ttl",
+  "size": 1822562
+ },
+ {
+  "file": "galaxyworkflow-dump.ttl",
+  "size": 5002127
+ },
+ {
+  "file": "workflowhub-dump.ttl",
+  "size": 11225288
+ },
+ {
+  "file": "workflow_hub.ttl",
+  "size": 1912779
+ },
+ {
+  "file": "EDAM.owl",
+  "size": 3413870
+ }
 ]

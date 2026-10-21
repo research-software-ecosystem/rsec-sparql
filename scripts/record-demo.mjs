@@ -1,4 +1,4 @@
-// Record demo.gif: open the site in headless Chrome, wait for the datasets to load,
+// Record demo.gif: open the site in headless Chrome, capture the loading splash screen,
 // type a query, run it, then assemble the screenshots into a GIF with ImageMagick.
 //
 // Usage: npm run demo [-- output.gif]
@@ -61,7 +61,7 @@ async function record() {
     await page.goto(url); await snap(80);
     url = URL;
     await page.goto(url, { waitUntil: "domcontentloaded" }); await snap(60);
-    while (await page.$eval("#run", (b) => b.disabled)) { await sleep(1500); await snap(25); }
+    while (await page.$("#splash")) { await sleep(1000); await snap(25); }
     await snap(150);
 
     await page.$eval("#query", (t) => { t.value = ""; t.focus(); });
@@ -93,7 +93,7 @@ function assemble(frames) {
       "-gravity", "northwest", "-annotate", "+28+12", url, "-resize", `${GIF_WIDTH}x`, out]);
     args.push("-delay", String(delay), out);
   });
-  execFileSync("magick", [...args, "-loop", "0", "-colors", "96", "-layers", "Optimize", OUTPUT]);
+  execFileSync("magick", [...args, "-loop", "0", "-colors", "96", "-layers", "OptimizeFrame", "-layers", "OptimizeTransparency", OUTPUT]);
 }
 
 const server = spawn("python3", ["-m", "http.server", String(PORT), "--bind", "127.0.0.1"], { cwd: ROOT, stdio: "ignore" });
