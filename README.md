@@ -1,6 +1,6 @@
 # Query the RSEc knowledge graph with SPARQL
 
-**Live site: https://research-software-ecosystem.github.io/sparql/**
+**Live site: [research-software-ecosystem.org/sparql](https://research-software-ecosystem.org/sparql/)**
 
 Ask your own questions about the bioinformatics tools and workflows gathered by the [ELIXIR Research Software Ecosystem](https://research-software-ecosystem.org/) (RSEc): their metadata from bio.tools, Bioconda, BioContainers, Galaxy, WorkflowHub, Debian Med and BIII, linked into a single knowledge graph and described with the EDAM ontology.
 
