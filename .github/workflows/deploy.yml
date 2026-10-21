@@ -32,6 +32,17 @@ jobs:
         sparse-checkout: datasets
         filter: blob:none
 
+    # TEMPORARY: bioconda-dump.ttl in the content repository writes identifiers as unexpanded
+    # <biotools:XYZ> / <bioconda:XYZ> IRIs, which breaks links to bio.tools records. Expand them
+    # as the previous dumps did; this is a no-op once the dump is fixed upstream, then remove it.
+    - name: Expand biotools/bioconda prefixed IRIs (temporary)
+      run: |
+        grep -c -E '<(biotools|bioconda):' content/datasets/*.ttl | grep -v ':0$' || echo "nothing to rewrite"
+        sed -i -E \
+          -e 's#<biotools:#<https://bio.tools/#g' \
+          -e 's#<bioconda:#<https://github.com/bioconda/bioconda-recipes/tree/master/recipes/#g' \
+          content/datasets/*.ttl
+
     - name: Assemble site
       run: |
         mkdir -p _site/data
