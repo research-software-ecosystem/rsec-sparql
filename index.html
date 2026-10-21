@@ -24,25 +24,33 @@
     --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 16px/1.65 var(--font); color: var(--rsec-ink); background: #fff; }
+  body { margin: 0; font: 1.025rem/1.65 var(--font); -webkit-font-smoothing: antialiased; color: var(--rsec-ink); background: #fff; }
   a { color: var(--rsec-link); }
   a:hover { color: var(--rsec-navy); }
+  main p a, #results td a { font-weight: 550; text-decoration-color: rgba(7, 91, 120, 0.35); text-underline-offset: .18em; }
+  main p a:hover, #results td a:hover { text-decoration-color: var(--rsec-orange); }
   :focus-visible { outline: 3px solid rgba(241, 124, 33, 0.35); outline-offset: 2px; }
 
   .site-header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
     padding: .75rem max(1rem, calc((100% - 1200px) / 2)); background: rgba(255, 255, 255, 0.96);
-    border-bottom: 1px solid rgba(2, 52, 82, 0.1); box-shadow: 0 4px 18px rgba(2, 52, 82, 0.05); }
-  .site-header img { display: block; height: 44px; width: auto; }
-  .site-header nav { display: flex; gap: 1.25rem; font-weight: 600; font-size: .95rem; }
-  .site-header nav a { color: var(--rsec-navy); text-decoration: none; }
-  .site-header nav a:hover { color: var(--rsec-orange); }
+    border-bottom: 1px solid rgba(2, 52, 82, 0.1); box-shadow: 0 4px 18px rgba(2, 52, 82, 0.05); backdrop-filter: blur(12px); }
+  .site-header img { display: block; height: auto; width: 240px; max-width: 58vw; max-height: 52px; }
+  .site-header nav { display: flex; flex-wrap: wrap; gap: .25rem; font-weight: 650; font-size: .95rem; }
+  .site-header nav a { padding: .55rem .75rem; border-radius: .65rem; color: #324650; text-decoration: none; }
+  .site-header nav a:hover, .site-header nav a:focus-visible { color: var(--rsec-navy); background: #eef4f6; }
+  .site-header nav .support { padding-inline: 1rem; color: #fff; background: var(--rsec-navy); }
+  .site-header nav .support:hover, .site-header nav .support:focus-visible { color: #fff; background: var(--rsec-navy-hover); }
+
+  .site-header nav .try-sparql { color: var(--rsec-navy); background: #eef4f6; box-shadow: inset 0 -2px 0 var(--rsec-orange); }
+  .site-header nav .try-sparql:hover { background: #dce7eb; }
 
   main { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem 2rem; }
 
   .intro { margin: .25rem 0 1.25rem; }
-  h1 { margin: 0 0 .3rem; color: var(--rsec-navy); font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2rem); font-weight: 780; line-height: 1.15; letter-spacing: -0.03em; }
+  h1 { margin: 0 0 .3rem; color: var(--rsec-navy); font-size: clamp(1.5rem, 1.1rem + 1.4vw, 2rem); font-weight: 750; line-height: 1.15; letter-spacing: -0.035em; }
   .hl { background-image: linear-gradient(transparent 82%, rgba(241, 124, 33, 0.32) 82%); }
   .intro p { margin: 0; color: var(--rsec-muted); }
+  .intro .query-about { margin-top: .6rem; font-size: .9rem; }
 
   .panel { padding: clamp(1rem, 3vw, 1.5rem); border: 1px solid var(--rsec-border); border-radius: 20px; background: #fff; box-shadow: var(--rsec-shadow); }
   .field-label { display: block; margin-bottom: .35rem; font-weight: 650; color: var(--rsec-navy); }
@@ -72,7 +80,7 @@
   .btn.primary:hover:not(:disabled) { background: var(--rsec-navy-hover); }
   .btn.primary:disabled { opacity: .5; cursor: progress; }
   .btn.secondary { color: var(--rsec-navy); background: transparent; border: 1px solid #9bb1bc; }
-  .btn.secondary:hover { border-color: var(--rsec-navy); }
+  .btn.secondary:hover { color: #fff; background: var(--rsec-navy); border-color: var(--rsec-navy); }
   #info { color: var(--rsec-muted); font-weight: 600; }
   .hint { margin-left: auto; color: var(--rsec-muted); font-size: .85rem; }
   kbd { font: .8rem var(--mono); padding: .05rem .35rem; border: 1px solid var(--rsec-border); border-radius: 5px; background: var(--rsec-surface); }
@@ -83,14 +91,32 @@
   #status pre { margin: .5rem 0 0; padding: .75rem 1rem; font: 12px/1.5 var(--mono); white-space: pre-wrap; background: var(--rsec-surface); border-radius: 11px; }
 
   #results:not(:empty) { margin-top: 1.5rem; overflow: auto; max-height: 70vh; border: 1px solid var(--rsec-border); border-radius: 14px; }
-  #results table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+  #results table { border-collapse: collapse; width: 100%; font-size: .94rem; }
   #results th, #results td { padding: .5rem .75rem; text-align: left; vertical-align: top; word-break: break-word; border-bottom: 1px solid var(--rsec-border); }
-  #results th { position: sticky; top: 0; color: var(--rsec-navy); font-weight: 700; background: var(--rsec-surface); }
+  #results th { position: sticky; top: 0; color: #fff; font-weight: 700; background: var(--rsec-navy); border-color: #315d73; }
+  #results tr:nth-child(odd) td { background: #f8fafb; }
   #results tr:last-child td { border-bottom: 0; }
   #results pre { margin: 0; padding: 1rem; font: 13px/1.5 var(--mono); white-space: pre-wrap; }
   .err { color: #b42318; }
 
-  footer { max-width: 1200px; margin: 0 auto; padding: 1.5rem 1rem 2.5rem; color: var(--rsec-muted); font-size: .9rem; border-top: 1px solid var(--rsec-border); }
+  footer { margin-top: 2rem; color: #dce7eb; background: var(--rsec-navy); }
+  .footer-content { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+  .footer-content nav { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1.5rem; }
+  .footer-content ul { margin: 0; padding: 0; list-style: none; }
+  footer a, footer a:visited { color: #fff; font-weight: bold; text-decoration: none; }
+  footer a:hover, footer a:focus-visible { color: #ffd1ac; text-decoration: underline; }
+  .copyright { background: #012a43; border-top: 1px solid rgba(255, 255, 255, 0.12); }
+  .copyright p { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+  @media (max-width: 991.98px) {
+    .footer-content ul { flex: 0 0 calc(50% - .75rem); }
+    .copyright p { text-align: center; }
+  }
+  @media (max-width: 767.98px) {
+    body { font-size: 1rem; }
+    .site-header { gap: .5rem; }
+    .site-header nav { gap: .15rem; }
+    .site-header nav a { padding: .5rem; }
+  }
 
   #splash { position: fixed; inset: 0; z-index: 10; display: flex; align-items: center; justify-content: center; transition: opacity .4s;
     background: radial-gradient(circle at 85% 15%, rgba(121, 180, 115, 0.18), transparent 35%), linear-gradient(135deg, #f2f7f8 0%, #fff 60%, #fff7f0 100%); }
@@ -120,9 +146,12 @@
 
 <header class="site-header">
   <a href="https://research-software-ecosystem.org/"><img src="https://research-software-ecosystem.org/assets/img/logo-rsec-full.svg" alt="ELIXIR Research Software Ecosystem"></a>
-  <nav>
-    <a href="https://research-software-ecosystem.org/">RSEc website</a>
-    <a href="https://github.com/research-software-ecosystem/sparql">Source code</a>
+  <nav aria-label="Main navigation">
+    <a href="https://research-software-ecosystem.org/sources">Sources</a>
+    <a href="https://research-software-ecosystem.org/applications">Applications</a>
+    <a href="https://research-software-ecosystem.org/docs">Documentation</a>
+    <a class="try-sparql" href="./" aria-current="page">Try SPARQL</a>
+    <a class="support" href="https://research-software-ecosystem.org/contacts">Get in Touch</a>
   </nav>
 </header>
 
@@ -130,6 +159,7 @@
   <section class="intro">
     <h1>Query the <span class="hl">RSEc knowledge graph</span> with SPARQL</h1>
     <p>Linked metadata of bioinformatics tools and workflows, gathered by the ELIXIR Research Software Ecosystem from bio.tools, Bioconda, BioContainers, Galaxy, WorkflowHub and more. <a href="https://research-software-ecosystem.org/">Learn more about RSEc</a></p>
+    <p class="query-about">Data updated daily from the <a href="https://github.com/research-software-ecosystem/content">RSEc content repository</a>. Queries run in your browser using <a href="https://github.com/oxigraph/oxigraph">Oxigraph</a>.</p>
   </section>
 
   <section class="panel" aria-label="Query">
@@ -161,10 +191,23 @@ ORDER BY DESC(?triples)</textarea>
 </main>
 
 <footer>
-  Part of the <a href="https://research-software-ecosystem.org/">ELIXIR Research Software Ecosystem</a>
-  · Data updated daily from the <a href="https://github.com/research-software-ecosystem/content">RSEc content repository</a>
-  · Query engine: <a href="https://github.com/oxigraph/oxigraph">Oxigraph</a>
-  · <a href="https://github.com/research-software-ecosystem/sparql">Source code</a>
+  <div class="footer-content">
+    <nav aria-label="Footer navigation">
+      <ul>
+        <li><a href="https://research-software-ecosystem.org/contributors">Credits</a></li>
+        <li><a href="https://research-software-ecosystem.org/licence">Licence</a></li>
+      </ul>
+      <ul>
+        <li><a href="https://research-software-ecosystem.org/contacts">Contacts</a></li>
+        <li><a href="https://github.com/research-software-ecosystem/content/issues">Report an issue</a></li>
+      </ul>
+      <ul>
+        <li><a href="https://github.com/research-software-ecosystem/sparql">Website source</a></li>
+        <li><a href="https://github.com/research-software-ecosystem/content">Metadata repository</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="copyright"><p>&copy; 2026 Research Software Ecosystem</p></div>
 </footer>
 
 <script type="module" src="app.js"></script>
