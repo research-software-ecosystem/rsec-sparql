@@ -1,3 +1,12 @@
+<p align="center">
+  <a href="https://research-software-ecosystem.org">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/research-software-ecosystem/graphics/main/RSEc_Logo_FULL_mono.png">
+      <img src="https://raw.githubusercontent.com/research-software-ecosystem/graphics/main/RSEc_Logo_FULL_RGB.png" alt="ELIXIR Research Software Ecosystem (RSEc)" width="300">
+    </picture>
+  </a>
+</p>
+
 # Query the RSEc knowledge graph with SPARQL
 
 **Live site: [research-software-ecosystem.org/sparql](https://research-software-ecosystem.org/sparql/)**
